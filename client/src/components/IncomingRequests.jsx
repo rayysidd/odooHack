@@ -1,151 +1,68 @@
-// src/components/IncomingRequests.jsx
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import swapService from '../services/swapService'
-
-// Mock data for testing
-const mockRequests = [
-  {
-    _id: '1',
-    requester: {
-      _id: '2',
-      name: 'Mike Chen',
-      avatar: 'https://i.pravatar.cc/150?img=2',
-      email: 'mike@example.com'
-    },
-    skillOffered: {
-      skillId: '1',
-      skillName: 'Python'
-    },
-    skillRequested: {
-      skillId: '2',
-      skillName: 'React'
-    },
-    message: 'Hi! I\'d love to learn React from you. I have 3+ years of Python experience and can help you with machine learning concepts.',
-    proposedDuration: '2 weeks',
-    proposedSchedule: 'Weekends, 2 hours per session',
-    status: 'pending',
-    createdAt: new Date('2025-01-10T10:00:00Z')
-  },
-  {
-    _id: '2',
-    requester: {
-      _id: '3',
-      name: 'Emma Davis',
-      avatar: 'https://i.pravatar.cc/150?img=3',
-      email: 'emma@example.com'
-    },
-    skillOffered: {
-      skillId: '3',
-      skillName: 'UI/UX Design'
-    },
-    skillRequested: {
-      skillId: '4',
-      skillName: 'Node.js'
-    },
-    message: 'I\'m a UX designer looking to expand into backend development. I can help you with design principles and Figma in exchange for Node.js mentoring.',
-    proposedDuration: '3 weeks',
-    proposedSchedule: 'Weekdays after 6 PM',
-    status: 'pending',
-    createdAt: new Date('2025-01-08T14:30:00Z')
-  },
-  {
-    _id: '3',
-    requester: {
-      _id: '4',
-      name: 'Alex Rodriguez',
-      avatar: 'https://i.pravatar.cc/150?img=4',
-      email: 'alex@example.com'
-    },
-    skillOffered: {
-      skillId: '5',
-      skillName: 'Docker'
-    },
-    skillRequested: {
-      skillId: '6',
-      skillName: 'MongoDB'
-    },
-    message: 'I\'m experienced with containerization and would like to learn database design. Happy to teach Docker and Kubernetes concepts.',
-    proposedDuration: '4 weeks',
-    proposedSchedule: 'Flexible, prefer evenings',
-    status: 'pending',
-    createdAt: new Date('2025-01-05T09:15:00Z')
-  }
-]
 
 const IncomingRequests = () => {
   const { user } = useAuth()
   const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const fetchRequests = async () => {
-    try {
-      // For testing, use mock data
-      setTimeout(() => {
-        setRequests(mockRequests)
-        setLoading(false)
-      }, 1000)
-      
-      // Uncomment when API is ready:
-      // const res = await swapService.getIncomingRequests()
-      // setRequests(res.data.requests || [])
-      // setLoading(false)
-    } catch (err) {
-      console.error('Error fetching requests:', err)
-      setLoading(false)
-    }
-  }
-
   useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const res = await swapService.getIncomingRequests(user?.token)
+        setRequests(res.data.requests || [])
+      } catch (err) {
+        console.error('Error fetching requests:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
     fetchRequests()
-  }, [])
+  }, [user?.token])
 
   const handleRequestResponse = async (requestId, status) => {
     try {
-      // For testing, just update local state
-      setRequests(prev => prev.map(req => 
-        req._id === requestId ? { ...req, status } : req
-      ))
-      
-      const request = requests.find(r => r._id === requestId)
-      const actionText = status === 'accepted' ? 'accepted' : 'rejected'
-      alert(`Request from ${request.requester.name} ${actionText} successfully!`)
-      
-      // Uncomment when API is ready:
-      // await swapService.respondToRequest(requestId, status)
+      await swapService.respondToRequest(requestId, status)
+      setRequests(prev =>
+        prev.map(req =>
+          req._id === requestId ? { ...req, status } : req
+        )
+      )
+
+      const requester = requests.find(r => r._id === requestId)?.requester?.name || 'The user'
+      alert(`Request from ${requester} ${status === 'accepted' ? 'accepted' : 'rejected'} successfully!`)
     } catch (err) {
       console.error('Error responding to request:', err)
       alert('Failed to respond to request. Please try again.')
     }
   }
 
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
+  const formatDate = (date) =>
+    new Date(date).toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     })
-  }
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case 'pending': return 'bg-yellow-600/30 text-yellow-200 border-yellow-500/30'
-      case 'accepted': return 'bg-green-600/30 text-green-200 border-green-500/30'
-      case 'rejected': return 'bg-red-600/30 text-red-200 border-red-500/30'
-      default: return 'bg-gray-600/30 text-gray-200 border-gray-500/30'
+    const colors = {
+      pending: 'bg-yellow-600/30 text-yellow-200 border-yellow-500/30',
+      accepted: 'bg-green-600/30 text-green-200 border-green-500/30',
+      rejected: 'bg-red-600/30 text-red-200 border-red-500/30',
     }
+    return colors[status] || 'bg-gray-600/30 text-gray-200 border-gray-500/30'
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-800 via-blue-gray-900 to-gray-900 text-gray-100 py-20 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mb-4"></div>
-            <p className="text-blue-300 text-lg">Loading requests...</p>
-          </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-blue-200">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mb-4"></div>
+          <p className="text-lg">Loading requests...</p>
         </div>
       </div>
     )
@@ -190,12 +107,8 @@ const IncomingRequests = () => {
                       <h3 className="text-xl font-semibold text-cyan-300">
                         {request.requester.name}
                       </h3>
-                      <p className="text-sm text-blue-200">
-                        {request.requester.email}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {formatDate(request.createdAt)}
-                      </p>
+                      <p className="text-sm text-blue-200">{request.requester.email}</p>
+                      <p className="text-xs text-gray-400">{formatDate(request.createdAt)}</p>
                     </div>
                   </div>
 
