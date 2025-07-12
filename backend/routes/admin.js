@@ -81,8 +81,8 @@ router.get('/skill-requests', auth, adminAuth, async (req, res) => {
 
     const users = await User.find({
       $or: [
-        { 'skillsOffered.status': 'pending' },
-        { 'skillsWanted.status': 'pending' }
+        { 'skillsOffered.approved': false },
+        { 'skillsWanted.approved': false }
       ]
     })
       .select('name email skillsOffered skillsWanted')
@@ -92,8 +92,8 @@ router.get('/skill-requests', auth, adminAuth, async (req, res) => {
 
     const total = await User.countDocuments({
       $or: [
-        { 'skillsOffered.status': 'pending' },
-        { 'skillsWanted.status': 'pending' }
+        { 'skillsOffered.approved': false },
+        { 'skillsWanted.approved': false }
       ]
     });
 
