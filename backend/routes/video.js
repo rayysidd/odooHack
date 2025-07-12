@@ -1,38 +1,34 @@
 // routes/video.js
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const axios = require('axios');
+const { HMS_TEMPLATE_ID } = require("../config/vc");
+const { createRoom, generateToken } = require("../utils/vc");
 
-const HMS_TOKEN = process.env.HMS_MANAGEMENT_TOKEN;
-const ROOM_ID = process.env.HMS_DEFAULT_ROOM_ID;
+router.post("/start-call", async (req, res) => {
+  const { callerName, calleeName } = req.body;
 
-router.post('/token', async (req, res) => {
-  const { userName, role = 'host' } = req.body;
-
-  if (!userName) {
-    return res.status(400).json({ error: "userName is required" });
+  if (!callerName || !calleeName) {
+    return res.status(400).json({ error: "callerName and calleeName are required" });
   }
 
   try {
-    const response = await axios.post(
-      'https://api.100ms.live/v2/room-tokens/',
-      {
-        user_id: userName,
-        role,
-        room_id: ROOM_ID,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${HMS_TOKEN}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    const roomName = `call-${callerName}-${calleeName}-${Date.now()}`;
+    const room = await createRoom(roomName, HMS_TEMPLATE_ID, `Call between ${callerName} and ${calleeName}`);
 
-    return res.status(200).json({ token: response.data.token });
-  } catch (error) {
-    console.error('Error getting token:', error?.response?.data || error.message);
-    return res.status(500).json({ error: 'Failed to generate token' });
+    const callerToken = await generateToken(room.id, callerName, "host");
+    const calleeToken = await generateToken(room.id, calleeName, "host");
+
+    res.json({
+      roomId: room.id,
+      roomName: room.name,
+      tokens: {
+        [callerName]: callerToken,
+        [calleeName]: calleeToken,
+      },
+    });
+  } catch (err) {
+    console.error("Error starting call:", err?.response?.data || err.message);
+    res.status(500).json({ error: "Could not start call" });
   }
 });
 
