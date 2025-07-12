@@ -54,23 +54,38 @@ router.patch('/users/:id/ban', auth, adminAuth, async (req, res) => {
 });
 
 // Make user admin
-router.patch('/users/:id/admin', auth, adminAuth, async (req, res) => {
+router.patch('/skills/:userId/approve', auth, adminAuth, async (req, res) => {
   try {
-    const { isAdmin } = req.body;
-    const user = await User.findById(req.params.id);
+    const { skillId, skillType, approved, rejectionReason } = req.body;
 
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+    const user = await User.findById(req.params.userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const skillArray = skillType === 'offered' ? user.skillsOffered : user.skillsWanted;
+    const skill = skillArray.id(skillId);
+
+    if (!skill) return res.status(404).json({ message: 'Skill not found' });
+
+    // Logic: if rejectionReason exists, force reject
+    if (rejectionReason && rejectionReason.trim() !== '') {
+      skill.approved = false;
+      skill.rejectionReason = rejectionReason;
+      resMessage = 'rejected';
+    } else {
+      skill.approved = true;
+      skill.rejectionReason = null;
+      resMessage = 'approved';
     }
 
-    user.isAdmin = true;
     await user.save();
 
-    res.json({ message: `User ${isAdmin ? 'promoted to' : 'removed from'} admin successfully` });
+    res.json({ message: `Skill ${resMessage} successfully` });
   } catch (error) {
+    console.error('Skill approval error:', error);
     res.status(500).json({ message: error.message });
   }
 });
+
 
 // Get all skill requests for moderation
 router.get('/skill-requests', auth, adminAuth, async (req, res) => {
@@ -111,29 +126,28 @@ router.get('/skill-requests', auth, adminAuth, async (req, res) => {
 // Approve/Reject skill
 router.patch('/skills/:userId/approve', auth, adminAuth, async (req, res) => {
   try {
-    const { skillId, skillType, status, rejectionReason } = req.body;
+    const { skillId, skillType, approved, rejectionReason } = req.body;
+
     const user = await User.findById(req.params.userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    const skillArray = skillType === 'offered' ? user.skillsOffered : user.skillsWanted;
+    const skill = skillArray.id(skillId);
+    if (!skill) return res.status(404).json({ message: 'Skill not found' });
 
-    let skillArray = skillType === 'offered' ? user.skillsOffered : user.skillsWanted;
-    let skill = skillArray.id(skillId);
-
-    if (!skill) {
-      return res.status(404).json({ message: 'Skill not found' });
-    }
-
-    skill.status = status;
-    if (status === 'rejected') {
-      skill.rejectionReason = rejectionReason;
+    if (approved) {
+      skill.approved = true;
+      skill.rejectionReason = null;
+    } else {
+      skill.approved = false;
+      skill.rejectionReason = rejectionReason || 'No reason provided';
     }
 
     await user.save();
 
-    res.json({ message: `Skill ${status} successfully` });
+    res.json({ message: `Skill ${approved ? 'approved' : 'rejected'} successfully` });
   } catch (error) {
+    console.error('Skill approval error:', error);
     res.status(500).json({ message: error.message });
   }
 });
