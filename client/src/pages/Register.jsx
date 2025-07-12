@@ -1,17 +1,17 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import authService from '../services/authService'
+import axios from 'axios'
+import { useAuth } from '../context/AuthContext' // ✅
 
 const Register = () => {
-  const { login } = useAuth()
   const navigate = useNavigate()
+  const { login } = useAuth() // ✅
 
   const [form, setForm] = useState({
     name: '',
     email: '',
     password: '',
-    location: '', // <-- NEW
+    location: '',
   })
 
   const [error, setError] = useState(null)
@@ -25,9 +25,16 @@ const Register = () => {
     setError(null)
 
     try {
-      console.log("Registering user with data:", form)
-      const res = await authService.register(form)
+      const res = await axios.post('http://localhost:8001/api/auth/register', form)
+
+      // ✅ Notify context after successful register
       login(res.data.user)
+
+      // ✅ Optionally store token
+      if (res.data.token) {
+        localStorage.setItem('token', res.data.token)
+      }
+
       navigate('/')
     } catch (err) {
       console.error("Registration error:", err.response || err)
@@ -53,61 +60,38 @@ const Register = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="name" className="block text-sm font-semibold mb-2">Name</label>
-            <input
-              id="name"
-              type="text"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              required
-              placeholder="Your full name"
-              className="w-full px-5 py-3 rounded-md bg-gray-800 border border-gray-600 placeholder-gray-400 text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="email" className="block text-sm font-semibold mb-2">Email</label>
-            <input
-              id="email"
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              required
-              placeholder="you@example.com"
-              className="w-full px-5 py-3 rounded-md bg-gray-800 border border-gray-600 placeholder-gray-400 text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-semibold mb-2">Password</label>
-            <input
-              id="password"
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              required
-              placeholder="••••••••"
-              className="w-full px-5 py-3 rounded-md bg-gray-800 border border-gray-600 placeholder-gray-400 text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="location" className="block text-sm font-semibold mb-2">Location</label>
-            <input
-              id="location"
-              type="text"
-              name="location"
-              value={form.location}
-              onChange={handleChange}
-              required
-              placeholder="City, Country"
-              className="w-full px-5 py-3 rounded-md bg-gray-800 border border-gray-600 placeholder-gray-400 text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition"
-            />
-          </div>
+          <Input
+            label="Name"
+            name="name"
+            type="text"
+            value={form.name}
+            onChange={handleChange}
+            placeholder="Your full name"
+          />
+          <Input
+            label="Email"
+            name="email"
+            type="email"
+            value={form.email}
+            onChange={handleChange}
+            placeholder="you@example.com"
+          />
+          <Input
+            label="Password"
+            name="password"
+            type="password"
+            value={form.password}
+            onChange={handleChange}
+            placeholder="••••••••"
+          />
+          <Input
+            label="Location"
+            name="location"
+            type="text"
+            value={form.location}
+            onChange={handleChange}
+            placeholder="City, Country"
+          />
 
           <button
             type="submit"
@@ -132,12 +116,8 @@ const Register = () => {
 
       <style>{`
         @keyframes subtleTilt {
-          0%, 100% {
-            transform: rotateX(0deg) rotateY(0deg);
-          }
-          50% {
-            transform: rotateX(2deg) rotateY(2deg);
-          }
+          0%, 100% { transform: rotateX(0deg) rotateY(0deg); }
+          50% { transform: rotateX(2deg) rotateY(2deg); }
         }
         .animate-subtleTilt {
           animation: subtleTilt 12s ease-in-out infinite;
@@ -150,5 +130,17 @@ const Register = () => {
     </div>
   )
 }
+
+const Input = ({ label, ...props }) => (
+  <div>
+    <label htmlFor={props.name} className="block text-sm font-semibold mb-2">{label}</label>
+    <input
+      {...props}
+      id={props.name}
+      className="w-full px-5 py-3 rounded-md bg-gray-800 border border-gray-600 placeholder-gray-400 text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition"
+      required
+    />
+  </div>
+)
 
 export default Register

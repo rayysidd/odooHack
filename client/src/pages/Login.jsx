@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import authService from '../services/authService'
+import axios from 'axios'
+import { useAuth } from '../context/AuthContext' // ✅ Use context
 
 const Login = () => {
-  const { login } = useAuth()
   const navigate = useNavigate()
+  const { login } = useAuth() // ✅ Login method from context
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -16,8 +16,17 @@ const Login = () => {
     setError(null)
 
     try {
-      const res = await authService.login({ email, password })
-      login(res.data.user)
+      const res = await axios.post('http://localhost:8001/api/auth/login', {
+        email,
+        password,
+      })
+
+      login(res.data.user) // ✅ Set user in context
+
+      if (res.data.token) {
+        localStorage.setItem('token', res.data.token) // ✅ Store token for later use
+      }
+
       navigate('/')
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed.')
@@ -27,7 +36,10 @@ const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-800 via-blue-gray-900 to-gray-900 px-6">
       <div className="bg-gradient-to-tr from-blue-700 to-blue-gray-800 shadow-lg rounded-2xl p-10 max-w-md w-full text-gray-100">
-        <h2 className="text-4xl font-bold mb-8 text-center tracking-tight bg-gradient-to-r from-cyan-400 via-blue-300 to-blue-500 bg-clip-text text-transparent select-none animate-subtleTilt" style={{ textShadow: '0 4px 10px rgba(0,0,0,0.7)' }}>
+        <h2
+          className="text-4xl font-bold mb-8 text-center tracking-tight bg-gradient-to-r from-cyan-400 via-blue-300 to-blue-500 bg-clip-text text-transparent select-none animate-subtleTilt"
+          style={{ textShadow: '0 4px 10px rgba(0,0,0,0.7)' }}
+        >
           Welcome Back
         </h2>
 
