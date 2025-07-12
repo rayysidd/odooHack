@@ -1,18 +1,18 @@
+// src/services/userService.js
 import axios from 'axios'
 
-const API = import.meta.env.VITE_API_URL + '/api/users'
+const API_URL = 'http://localhost:8001/api/users'
 
-// Get all users
-const getAllUsers = () => axios.get(API)
-
-// Get a single user by ID
-const getUserById = (id) => axios.get(`${API}/${id}`)
-
-// Ban a user (admin only)
-const banUser = (id) => axios.post(`${API}/${id}/ban`)
+const getAllUsers = async () => {
+  const token = localStorage.getItem('token') // Or use your auth context
+  const config = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
+  return axios.get(API_URL, config)
+}
 
 export default {
-  getAllUsers,
-  getUserById,
-  banUser,
+  getAllUsers
 }
