@@ -3,8 +3,8 @@ const express = require("express");
 const router = express.Router();
 const { HMS_TEMPLATE_ID } = require("../config/vc");
 const { createRoom, generateToken } = require("../utils/vc");
-
-router.post("/start-call", async (req, res) => {
+const {auth} = require("../middleware/auth");
+router.post("/start-call",auth, async (req, res) => {
   const { callerName, calleeName } = req.body;
 
   if (!callerName || !calleeName) {

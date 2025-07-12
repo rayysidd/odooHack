@@ -6,7 +6,132 @@ import { useAuth } from '../context/AuthContext'
 import UserCard from '../components/UserCard'
 import SwapRequestModal from '../components/SwapRequestModal'
 
+// Mock users data for testing
+const mockUsers = [
+  {
+    _id: '1',
+    name: 'Sarah Johnson',
+    skills: ['React', 'Node.js', 'MongoDB', 'TypeScript'],
+    avatar: 'https://i.pravatar.cc/150?img=1',
+    email: 'sarah@example.com',
+    bio: 'Full-stack developer with 5+ years of experience. Love teaching React and learning new technologies.',
+    rating: 4.8,
+    completedSwaps: 12
+  },
+  {
+    _id: '2',
+    name: 'Mike Chen',
+    skills: ['Python', 'Machine Learning', 'Data Science', 'TensorFlow'],
+    avatar: 'https://i.pravatar.cc/150?img=2',
+    email: 'mike@example.com',
+    bio: 'AI/ML engineer passionate about making complex concepts simple to understand.',
+    rating: 4.9,
+    completedSwaps: 8
+  },
+  {
+    _id: '3',
+    name: 'Emma Davis',
+    skills: ['UI/UX Design', 'Figma', 'Adobe Creative Suite', 'Prototyping'],
+    avatar: 'https://i.pravatar.cc/150?img=3',
+    email: 'emma@example.com',
+    bio: 'Creative designer who loves crafting beautiful user experiences.',
+    rating: 4.7,
+    completedSwaps: 15
+  },
+  {
+    _id: '4',
+    name: 'Alex Rodriguez',
+    skills: ['Java', 'Spring Boot', 'Docker', 'AWS'],
+    avatar: 'https://i.pravatar.cc/150?img=4',
+    email: 'alex@example.com',
+    bio: 'Backend developer specialized in microservices and cloud architecture.',
+    rating: 4.6,
+    completedSwaps: 10
+  },
+  {
+    _id: '5',
+    name: 'Lisa Wang',
+    skills: ['Digital Marketing', 'SEO', 'Content Strategy', 'Analytics'],
+    avatar: 'https://i.pravatar.cc/150?img=5',
+    email: 'lisa@example.com',
+    bio: 'Marketing professional helping businesses grow their online presence.',
+    rating: 4.8,
+    completedSwaps: 18
+  },
+  {
+    _id: '6',
+    name: 'David Kim',
+    skills: ['iOS Development', 'Swift', 'App Store Optimization', 'Flutter'],
+    avatar: 'https://i.pravatar.cc/150?img=6',
+    email: 'david@example.com',
+    bio: 'Mobile app developer with expertise in iOS and cross-platform development.',
+    rating: 4.9,
+    completedSwaps: 14
+  },
+  {
+    _id: '7',
+    name: 'Jessica Brown',
+    skills: ['Photography', 'Photoshop', 'Lightroom', 'Video Editing'],
+    avatar: 'https://i.pravatar.cc/150?img=7',
+    email: 'jessica@example.com',
+    bio: 'Professional photographer and content creator sharing visual storytelling techniques.',
+    rating: 4.7,
+    completedSwaps: 20
+  },
+  {
+    _id: '8',
+    name: 'Carlos Martinez',
+    skills: ['Guitar', 'Music Production', 'Audio Engineering', 'Composition'],
+    avatar: 'https://i.pravatar.cc/150?img=8',
+    email: 'carlos@example.com',
+    bio: 'Musician and producer teaching guitar and music production skills.',
+    rating: 4.8,
+    completedSwaps: 16
+  },
+  {
+    _id: '9',
+    name: 'Rachel Green',
+    skills: ['Yoga', 'Meditation', 'Nutrition', 'Wellness Coaching'],
+    avatar: 'https://i.pravatar.cc/150?img=9',
+    email: 'rachel@example.com',
+    bio: 'Certified yoga instructor and wellness coach helping others find balance.',
+    rating: 4.9,
+    completedSwaps: 22
+  },
+  {
+    _id: '10',
+    name: 'Tom Wilson',
+    skills: ['Blockchain', 'Solidity', 'Web3', 'Smart Contracts'],
+    avatar: 'https://i.pravatar.cc/150?img=10',
+    email: 'tom@example.com',
+    bio: 'Blockchain developer working on decentralized applications and smart contracts.',
+    rating: 4.6,
+    completedSwaps: 9
+  },
+  {
+    _id: '11',
+    name: 'Nina Patel',
+    skills: ['Language Learning', 'Spanish', 'French', 'ESL Teaching'],
+    avatar: 'https://i.pravatar.cc/150?img=11',
+    email: 'nina@example.com',
+    bio: 'Polyglot and language teacher helping others master new languages.',
+    rating: 4.8,
+    completedSwaps: 25
+  },
+  {
+    _id: '12',
+    name: 'James Thompson',
+    skills: ['Cooking', 'Baking', 'Culinary Arts', 'Recipe Development'],
+    avatar: 'https://i.pravatar.cc/150?img=12',
+    email: 'james@example.com',
+    bio: 'Professional chef sharing culinary skills and cooking techniques.',
+    rating: 4.7,
+    completedSwaps: 19
+  }
+]
+
 const Home = () => {
+  
   const { user } = useAuth()
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -14,39 +139,66 @@ const Home = () => {
   const [modalOpen, setModalOpen] = useState(false)
 
   const fetchUsers = async () => {
-  try {
-    const res = await userService.getAllUsers()
-    const filtered = res.data.users?.filter(u => u._id !== user?._id) || []
-    setUsers(filtered)
-  } catch (err) {
-    console.error('Error fetching users:', err)
-  } finally {
-    setLoading(false)
+    try {
+      // For testing, use mock data
+      // Comment out these lines and uncomment the API call below when ready
+      setTimeout(() => {
+        const filtered = mockUsers.filter(u => u._id !== user?._id)
+        setUsers(filtered)
+        setLoading(false)
+      }, 1000) // Simulate API delay
+      
+      // Uncomment this when you have real API:
+      // const res = await userService.getAllUsers()
+      // const filtered = res.data.users?.filter(u => u._id !== user?._id) || []
+      // setUsers(filtered)
+    } catch (err) {
+      console.error('Error fetching users:', err)
+      setLoading(false)
+    }
   }
-}
 
   useEffect(() => {
-    if (user) fetchUsers()
-  }, [user])
+    // For testing, always fetch users
+    fetchUsers()
+    
+    // Uncomment this when you have real auth:
+    // if (user) fetchUsers()
+  }, [])
 
   const handleRequestSwap = (targetUser) => {
     setSelectedUser(targetUser)
     setModalOpen(true)
   }
 
-  const handleSendSwap = async ({ receiverId, message }) => {
+  const handleSendSwap = async ({ receiverId, skillToOffer, skillToRequest, message }) => {
     try {
-      await swapService.sendRequest({ receiverId, message })
-      alert('Swap request sent successfully!')
+      await swapService.sendRequest({ 
+        receiverId, 
+        skillToOffer, 
+        skillToRequest, 
+        message 
+      })
+      alert(`Swap request sent successfully to ${selectedUser.name}! 
+      
+You offered: ${skillToOffer}
+You requested: ${skillToRequest}`)
       setModalOpen(false)
+      setSelectedUser(null)
     } catch (err) {
       console.error('Swap request error:', err)
-      alert('Failed to send request.')
+      alert('Failed to send request. Please try again.')
     }
+  }
+
+  const handleModalClose = () => {
+    setModalOpen(false)
+    setSelectedUser(null)
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-800 via-blue-gray-900 to-gray-900 text-gray-100 relative overflow-x-hidden">
+      {/* Header */}
       <header className="py-28 text-center relative z-20 px-6 max-w-4xl mx-auto">
         <h1 className="text-6xl sm:text-7xl font-semibold tracking-tight bg-gradient-to-r from-blue-400 via-blue-300 to-cyan-400 bg-clip-text text-transparent select-none animate-subtleTilt">
           SkillSwap
@@ -57,31 +209,52 @@ const Home = () => {
         </p>
       </header>
 
+      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 pb-28 relative z-10">
         {loading ? (
-          <p className="text-center text-blue-300 text-lg animate-pulse mt-12">Loading users...</p>
-        ) : users.length === 0 ? (
-          <p className="text-center text-blue-400 text-lg mt-12">No users found.</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-12">
-            {users.map((u) => (
-              <UserCard
-                key={u._id}
-                user={u}
-                onRequestSwap={handleRequestSwap}
-              />
-            ))}
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mb-4"></div>
+            <p className="text-blue-300 text-lg">Loading amazing people...</p>
           </div>
+        ) : users.length === 0 ? (
+          <div className="text-center py-20">
+            <div className="text-6xl mb-4">👥</div>
+            <p className="text-blue-400 text-lg">No users found.</p>
+            <p className="text-gray-400 text-sm mt-2">Be the first to join the community!</p>
+          </div>
+        ) : (
+          <>
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-semibold text-cyan-300 mb-4">
+                Connect with Skilled People
+              </h2>
+              <p className="text-blue-200 max-w-2xl mx-auto">
+                Browse through our community of learners and experts. Find someone whose skills complement yours and start your skill exchange journey.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {users.map((u) => (
+                <UserCard
+                  key={u._id}
+                  user={u}
+                  onRequestSwap={handleRequestSwap}
+                />
+              ))}
+            </div>
+          </>
         )}
       </main>
 
+      {/* Swap Request Modal */}
       <SwapRequestModal
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={handleModalClose}
         targetUser={selectedUser}
         onSubmit={handleSendSwap}
       />
 
+      {/* Background Effects */}
       <div aria-hidden="true" className="fixed top-24 right-12 w-48 h-48 bg-blue-600 opacity-30 rounded-full blur-3xl animate-floatSlow shadow-blue-500/70"></div>
       <div aria-hidden="true" className="fixed bottom-28 left-10 w-72 h-72 bg-blue-gray-700 opacity-20 rounded-full blur-3xl animate-floatSlow delay-3000 shadow-blue-600/60"></div>
       <div aria-hidden="true" className="fixed top-40 left-1/2 w-40 h-40 bg-cyan-600 opacity-20 rounded-full blur-3xl animate-floatSlow delay-1500 shadow-cyan-400/60" style={{ transform: 'translateX(-50%)' }}></div>
@@ -122,6 +295,14 @@ const Home = () => {
           transform-style: preserve-3d;
           perspective: 800px;
           cursor: default;
+        }
+
+        .delay-3000 {
+          animation-delay: 3s;
+        }
+
+        .delay-1500 {
+          animation-delay: 1.5s;
         }
       `}</style>
     </div>

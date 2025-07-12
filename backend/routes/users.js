@@ -22,6 +22,26 @@ const upload = multer({
   }
 });
 
+// Get all users (for home page)
+router.get('/', auth, async (req, res) => {
+  try {
+    // Only return public profiles and basic info
+    const users = await User.find({ 
+      isPublic: true, 
+      isBanned: false 
+    })
+    .select('-password -email') // Exclude sensitive fields
+    .sort({ createdAt: -1 }); // Sort by newest first
+
+    res.json({ 
+      users: users,
+      count: users.length 
+    });
+  } catch (error) {
+    console.error('Get all users error:', error);
+    res.status(500).json({message:"Server Error"})}
+});
+
 // Get user profile
 router.get('/profile/:id', auth, async (req, res) => {
   try {
