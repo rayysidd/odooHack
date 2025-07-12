@@ -10,7 +10,7 @@ const MessageBubble = ({ message, isSender }) => {
             : 'bg-gray-800 text-gray-200 rounded-bl-none border border-slate-700'
           } shadow-md`}
       >
-        <div>{message.content}</div>
+        <div>{message.text}</div>
         <div className="text-[10px] text-right mt-1 opacity-70 font-mono">
           {new Date(message.timestamp || Date.now()).toLocaleTimeString([], {
             hour: '2-digit',

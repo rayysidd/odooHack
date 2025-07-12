@@ -1,3 +1,4 @@
+// src/pages/Home.jsx
 import React, { useEffect, useState } from 'react'
 import userService from '../services/userService'
 import swapService from '../services/swapService'
@@ -13,16 +14,16 @@ const Home = () => {
   const [modalOpen, setModalOpen] = useState(false)
 
   const fetchUsers = async () => {
-    try {
-      const res = await userService.getAllUsers()
-      const filtered = res.data.filter(u => u._id !== user?._id)
-      setUsers(filtered)
-    } catch (err) {
-      console.error('Error fetching users:', err)
-    } finally {
-      setLoading(false)
-    }
+  try {
+    const res = await userService.getAllUsers()
+    const filtered = res.data.users?.filter(u => u._id !== user?._id) || []
+    setUsers(filtered)
+  } catch (err) {
+    console.error('Error fetching users:', err)
+  } finally {
+    setLoading(false)
   }
+}
 
   useEffect(() => {
     if (user) fetchUsers()
@@ -47,10 +48,7 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-800 via-blue-gray-900 to-gray-900 text-gray-100 relative overflow-x-hidden">
       <header className="py-28 text-center relative z-20 px-6 max-w-4xl mx-auto">
-        <h1
-          className="text-6xl sm:text-7xl font-semibold tracking-tight bg-gradient-to-r from-blue-400 via-blue-300 to-cyan-400 bg-clip-text text-transparent select-none animate-subtleTilt"
-          style={{ textShadow: '0 4px 10px rgba(0,0,0,0.7)' }}
-        >
+        <h1 className="text-6xl sm:text-7xl font-semibold tracking-tight bg-gradient-to-r from-blue-400 via-blue-300 to-cyan-400 bg-clip-text text-transparent select-none animate-subtleTilt">
           SkillSwap
         </h1>
         <div className="mx-auto mt-4 mb-8 w-20 h-1 bg-blue-400 rounded-full shadow-lg"></div>
@@ -71,7 +69,6 @@ const Home = () => {
                 key={u._id}
                 user={u}
                 onRequestSwap={handleRequestSwap}
-                className="bg-blue-gray-800 rounded-xl shadow-md hover:shadow-blue-600 transition transform hover:-translate-y-1 hover:scale-105 cursor-pointer"
               />
             ))}
           </div>
@@ -85,20 +82,9 @@ const Home = () => {
         onSubmit={handleSendSwap}
       />
 
-      {/* Subtle floating shapes */}
-      <div
-        aria-hidden="true"
-        className="fixed top-24 right-12 w-48 h-48 bg-blue-600 opacity-30 rounded-full blur-3xl animate-floatSlow shadow-blue-500/70"
-      ></div>
-      <div
-        aria-hidden="true"
-        className="fixed bottom-28 left-10 w-72 h-72 bg-blue-gray-700 opacity-20 rounded-full blur-3xl animate-floatSlow delay-3000 shadow-blue-600/60"
-      ></div>
-      <div
-        aria-hidden="true"
-        className="fixed top-40 left-1/2 w-40 h-40 bg-cyan-600 opacity-20 rounded-full blur-3xl animate-floatSlow delay-1500 shadow-cyan-400/60"
-        style={{ transform: 'translateX(-50%)' }}
-      ></div>
+      <div aria-hidden="true" className="fixed top-24 right-12 w-48 h-48 bg-blue-600 opacity-30 rounded-full blur-3xl animate-floatSlow shadow-blue-500/70"></div>
+      <div aria-hidden="true" className="fixed bottom-28 left-10 w-72 h-72 bg-blue-gray-700 opacity-20 rounded-full blur-3xl animate-floatSlow delay-3000 shadow-blue-600/60"></div>
+      <div aria-hidden="true" className="fixed top-40 left-1/2 w-40 h-40 bg-cyan-600 opacity-20 rounded-full blur-3xl animate-floatSlow delay-1500 shadow-cyan-400/60" style={{ transform: 'translateX(-50%)' }}></div>
 
       <style>{`
         @keyframes gradientShift {

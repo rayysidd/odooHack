@@ -1,3 +1,4 @@
+// src/components/ChatWindow.jsx
 import React, { useEffect, useRef, useState } from 'react'
 import MessageBubble from './MessageBubble'
 
@@ -34,7 +35,7 @@ const ChatWindow = ({ messages, onSendMessage, currentUser, otherUser }) => {
             <MessageBubble
               key={idx}
               message={msg}
-              isSender={msg.senderId === currentUser._id}
+              isSender={msg.sender === currentUser._id}
             />
           ))}
           <div ref={bottomRef} />
