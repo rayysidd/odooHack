@@ -281,26 +281,18 @@ router.put('/:id/cancel', auth, async (req, res) => {
   }
 });
 
-// Delete request (by requester, only if pending)
+// Delete request (by requester, only if not yet approved)
 router.delete('/:id', auth, async (req, res) => {
   try {
-    const request = await Request.findById(req.params.id);
+    const request = await Request.findOneAndDelete({
+      _id: req.params.id,
+      requester: req.user._id,
+      approved: false
+    });
 
     if (!request) {
-      return res.status(404).json({ message: 'Request not found' });
+      return res.status(404).json({ message: 'Request not found or already approved' });
     }
-
-    // Check if user is the requester
-    if (request.requester.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized to delete this request' });
-    }
-
-    // Check if request is pending
-    if (request.status !== 'pending') {
-      return res.status(400).json({ message: 'Only pending requests can be deleted' });
-    }
-
-    await Request.findByIdAndDelete(req.params.id);
 
     res.json({ message: 'Request deleted successfully' });
   } catch (error) {
@@ -308,6 +300,7 @@ router.delete('/:id', auth, async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 // Mark request as completed
 router.put('/:id/complete', auth, async (req, res) => {
