@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext'
 import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import Profile from './pages/Profile'
+import Login from './pages/Login' // Add this import
 import IncomingRequests from './components/IncomingRequests'
 import SwapMatches from './components/SwapMatches'
 
@@ -14,6 +15,8 @@ function App() {
     switch (currentPage) {
       case 'home':
         return <Home />
+      case 'login':
+        return <Login onPageChange={setCurrentPage} /> // Pass onPageChange prop
       case 'requests':
         return <IncomingRequests />
       case 'matches':

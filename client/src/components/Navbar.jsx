@@ -21,6 +21,8 @@ const Navbar = ({ currentPage, onPageChange }) => {
   const handleLogout = () => {
     logout()
     setIsMenuOpen(false)
+    // Redirect to login page immediately after logout
+    onPageChange('login')
   }
 
   const handleLogin = () => {
