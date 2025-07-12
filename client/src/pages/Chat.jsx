@@ -1,3 +1,4 @@
+// src/pages/Chat.jsx
 import React, { useEffect, useState } from 'react'
 import chatService from '../services/chatService'
 import { useAuth } from '../context/AuthContext'
@@ -16,9 +17,11 @@ const Chat = () => {
     const fetchConversations = async () => {
       try {
         const res = await chatService.getMyChats()
-        setConversations(res.data)
+        const chatList = Array.isArray(res.data) ? res.data : res.data.conversations || []
+        setConversations(chatList)
       } catch (err) {
         console.error('Error fetching chats:', err)
+        setConversations([])
       }
     }
 
@@ -42,7 +45,7 @@ const Chat = () => {
     setSelectedUser(otherUser)
     try {
       const res = await chatService.getMessagesWith(otherUser._id)
-      setMessages(res.data)
+      setMessages(res.data || [])
     } catch (err) {
       console.error('Error loading chat:', err)
       setMessages([])
@@ -71,7 +74,8 @@ const Chat = () => {
       <div className="w-1/3 border-r border-gray-700 bg-gray-900/60 backdrop-blur-sm p-4 overflow-y-auto">
         <h2 className="text-2xl font-semibold text-blue-300 mb-6 animate-subtleTilt">💬 Conversations</h2>
         {conversations.map((conv) => {
-          const other = conv.participants.find((p) => p._id !== user._id)
+          const other = conv.participants?.find((p) => p._id !== user._id)
+          if (!other) return null
           return (
             <div
               key={conv._id}
