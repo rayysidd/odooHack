@@ -63,7 +63,7 @@ router.patch('/users/:id/admin', auth, adminAuth, async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    user.isAdmin = isAdmin;
+    user.isAdmin = true;
     await user.save();
 
     res.json({ message: `User ${isAdmin ? 'promoted to' : 'removed from'} admin successfully` });
