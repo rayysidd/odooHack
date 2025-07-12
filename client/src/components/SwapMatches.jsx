@@ -3,155 +3,86 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import swapService from '../services/swapService'
 
-// Mock data for testing
-const mockMatches = [
-  {
-    _id: '1',
-    participants: [
-      {
-        _id: '1',
-        name: 'You',
-        avatar: 'https://i.pravatar.cc/150?img=1',
-        skillOffered: 'React',
-        skillRequested: 'Python'
-      },
-      {
-        _id: '2',
-        name: 'Mike Chen',
-        avatar: 'https://i.pravatar.cc/150?img=2',
-        skillOffered: 'Python',
-        skillRequested: 'React'
-      }
-    ],
-    status: 'active',
-    duration: '2 weeks',
-    schedule: 'Weekends, 2 hours per session',
-    progress: 65,
-    startDate: new Date('2025-01-01T10:00:00Z'),
-    endDate: new Date('2025-01-15T10:00:00Z'),
-    sessions: [
-      { date: '2025-01-01', completed: true, topic: 'React Basics' },
-      { date: '2025-01-02', completed: true, topic: 'Python Fundamentals' },
-      { date: '2025-01-08', completed: true, topic: 'React Hooks' },
-      { date: '2025-01-09', completed: false, topic: 'Python Data Structures' },
-      { date: '2025-01-15', completed: false, topic: 'React State Management' }
-    ],
-    lastActivity: new Date('2025-01-09T15:30:00Z')
-  },
-  {
-    _id: '2',
-    participants: [
-      {
-        _id: '1',
-        name: 'You',
-        avatar: 'https://i.pravatar.cc/150?img=1',
-        skillOffered: 'Node.js',
-        skillRequested: 'UI/UX Design'
-      },
-      {
-        _id: '3',
-        name: 'Emma Davis',
-        avatar: 'https://i.pravatar.cc/150?img=3',
-        skillOffered: 'UI/UX Design',
-        skillRequested: 'Node.js'
-      }
-    ],
-    status: 'active',
-    duration: '3 weeks',
-    schedule: 'Weekdays after 6 PM',
-    progress: 40,
-    startDate: new Date('2025-01-05T18:00:00Z'),
-    endDate: new Date('2025-01-26T18:00:00Z'),
-    sessions: [
-      { date: '2025-01-05', completed: true, topic: 'Design Principles' },
-      { date: '2025-01-06', completed: true, topic: 'Express.js Basics' },
-      { date: '2025-01-12', completed: false, topic: 'Figma Prototyping' },
-      { date: '2025-01-13', completed: false, topic: 'RESTful APIs' }
-    ],
-    lastActivity: new Date('2025-01-06T19:45:00Z')
-  },
-  {
-    _id: '3',
-    participants: [
-      {
-        _id: '1',
-        name: 'You',
-        avatar: 'https://i.pravatar.cc/150?img=1',
-        skillOffered: 'MongoDB',
-        skillRequested: 'Docker'
-      },
-      {
-        _id: '4',
-        name: 'Alex Rodriguez',
-        avatar: 'https://i.pravatar.cc/150?img=4',
-        skillOffered: 'Docker',
-        skillRequested: 'MongoDB'
-      }
-    ],
-    status: 'completed',
-    duration: '4 weeks',
-    schedule: 'Flexible, prefer evenings',
-    progress: 100,
-    startDate: new Date('2024-12-01T19:00:00Z'),
-    endDate: new Date('2024-12-29T19:00:00Z'),
-    sessions: [
-      { date: '2024-12-01', completed: true, topic: 'MongoDB Fundamentals' },
-      { date: '2024-12-02', completed: true, topic: 'Docker Containers' },
-      { date: '2024-12-08', completed: true, topic: 'Data Modeling' },
-      { date: '2024-12-09', completed: true, topic: 'Docker Compose' },
-      { date: '2024-12-15', completed: true, topic: 'Aggregation Pipeline' },
-      { date: '2024-12-16', completed: true, topic: 'Kubernetes Basics' }
-    ],
-    lastActivity: new Date('2024-12-29T20:15:00Z'),
-    rating: 4.8
-  }
-]
-
 const SwapMatches = () => {
   const { user } = useAuth()
   const [matches, setMatches] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [filter, setFilter] = useState('all') // all, active, completed
+  const [actionLoading, setActionLoading] = useState({})
 
   const fetchMatches = async () => {
     try {
-      // For testing, use mock data
-      setTimeout(() => {
-        setMatches(mockMatches)
-        setLoading(false)
-      }, 1000)
-      
-      // Uncomment when API is ready:
-      // const res = await swapService.getMatches()
-      // setMatches(res.data.matches || [])
-      // setLoading(false)
+      setLoading(true)
+      setError('')
+      const response = await swapService.getMatches(filter)
+      setMatches(response.matches || [])
     } catch (err) {
       console.error('Error fetching matches:', err)
+      setError('Failed to load matches. Please try again.')
+    } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
     fetchMatches()
-  }, [])
+  }, [filter])
 
   const handleMarkComplete = async (matchId) => {
+    if (!window.confirm('Are you sure you want to mark this match as completed?')) {
+      return
+    }
+
     try {
+      setActionLoading(prev => ({ ...prev, [matchId]: true }))
+      
+      await swapService.markMatchComplete(matchId)
+      
+      // Update local state
       setMatches(prev => prev.map(match => 
-        match._id === matchId ? { ...match, status: 'completed', progress: 100 } : match
+        match._id === matchId 
+          ? { ...match, status: 'completed', progress: 100, completedAt: new Date() }
+          : match
       ))
       
       alert('Match marked as completed!')
-      
-      // Uncomment when API is ready:
-      // await swapService.markMatchComplete(matchId)
     } catch (err) {
       console.error('Error marking match complete:', err)
       alert('Failed to mark match as complete. Please try again.')
+    } finally {
+      setActionLoading(prev => ({ ...prev, [matchId]: false }))
+    }
+  }
+
+  const handleCancelMatch = async (matchId) => {
+    if (!window.confirm('Are you sure you want to cancel this match? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      setActionLoading(prev => ({ ...prev, [matchId]: true }))
+      
+      await swapService.cancelMatch(matchId)
+      
+      // Update local state
+      setMatches(prev => prev.map(match => 
+        match._id === matchId 
+          ? { ...match, status: 'cancelled' }
+          : match
+      ))
+      
+      alert('Match cancelled successfully.')
+    } catch (err) {
+      console.error('Error cancelling match:', err)
+      alert('Failed to cancel match. Please try again.')
+    } finally {
+      setActionLoading(prev => ({ ...prev, [matchId]: false }))
     }
   }
 
   const formatDate = (date) => {
+    if (!date) return 'N/A'
     return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -163,16 +94,26 @@ const SwapMatches = () => {
     switch (status) {
       case 'active': return 'bg-green-600/30 text-green-200 border-green-500/30'
       case 'completed': return 'bg-blue-600/30 text-blue-200 border-blue-500/30'
+      case 'cancelled': return 'bg-red-600/30 text-red-200 border-red-500/30'
+      case 'paused': return 'bg-yellow-600/30 text-yellow-200 border-yellow-500/30'
       default: return 'bg-gray-600/30 text-gray-200 border-gray-500/30'
     }
   }
 
   const getOtherParticipant = (match) => {
-    return match.participants.find(p => p.name !== 'You')
+    if (!user?._id) return null
+    return match.participants.find(p => p.user._id !== user._id)
   }
 
-  const getYourRole = (match) => {
-    return match.participants.find(p => p.name === 'You')
+  const getCurrentUserParticipant = (match) => {
+    if (!user?._id) return null
+    return match.participants.find(p => p.user._id === user._id)
+  }
+
+  const calculateAverageRating = (match) => {
+    const ratings = match.participants.filter(p => p.rating).map(p => p.rating)
+    if (ratings.length === 0) return null
+    return (ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length).toFixed(1)
   }
 
   const filteredMatches = matches.filter(match => {
@@ -187,6 +128,25 @@ const SwapMatches = () => {
           <div className="flex flex-col items-center justify-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mb-4"></div>
             <p className="text-blue-300 text-lg">Loading matches...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-800 via-blue-gray-900 to-gray-900 text-gray-100 py-20 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center py-20">
+            <div className="text-6xl mb-4">⚠️</div>
+            <p className="text-red-400 text-lg mb-4">{error}</p>
+            <button 
+              onClick={fetchMatches}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
+            >
+              Retry
+            </button>
           </div>
         </div>
       </div>
@@ -208,7 +168,7 @@ const SwapMatches = () => {
         {/* Filter Tabs */}
         <div className="flex justify-center mb-8">
           <div className="bg-gray-800/50 rounded-lg p-1 border border-blue-500/30">
-            {['all', 'active', 'completed'].map((filterOption) => (
+            {['all', 'active', 'completed', 'cancelled', 'paused'].map((filterOption) => (
               <button
                 key={filterOption}
                 onClick={() => setFilter(filterOption)}
@@ -242,7 +202,10 @@ const SwapMatches = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {filteredMatches.map((match) => {
               const otherParticipant = getOtherParticipant(match)
-              const yourRole = getYourRole(match)
+              const currentUserParticipant = getCurrentUserParticipant(match)
+              const averageRating = calculateAverageRating(match)
+              
+              if (!otherParticipant || !currentUserParticipant) return null
               
               return (
                 <div
@@ -253,13 +216,13 @@ const SwapMatches = () => {
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
                       <img
-                        src={otherParticipant.avatar}
-                        alt={otherParticipant.name}
+                        src={otherParticipant.user.avatar || `https://ui-avatars.com/api/?name=${otherParticipant.user.name}&background=3b82f6&color=fff`}
+                        alt={otherParticipant.user.name}
                         className="w-12 h-12 rounded-full object-cover border-2 border-blue-500"
                       />
                       <div>
                         <h3 className="text-lg font-semibold text-cyan-300">
-                          {otherParticipant.name}
+                          {otherParticipant.user.name}
                         </h3>
                         <p className="text-sm text-gray-400">
                           {formatDate(match.startDate)} - {formatDate(match.endDate)}
@@ -275,11 +238,11 @@ const SwapMatches = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div className="bg-green-600/20 p-4 rounded-lg border border-green-500/30">
                       <p className="text-xs text-green-200 mb-1">YOU TEACH</p>
-                      <p className="text-green-300 font-medium text-lg">{yourRole.skillOffered}</p>
+                      <p className="text-green-300 font-medium text-lg">{currentUserParticipant.skillOffered.skillName}</p>
                     </div>
                     <div className="bg-blue-600/20 p-4 rounded-lg border border-blue-500/30">
                       <p className="text-xs text-blue-200 mb-1">YOU LEARN</p>
-                      <p className="text-blue-300 font-medium text-lg">{yourRole.skillRequested}</p>
+                      <p className="text-blue-300 font-medium text-lg">{currentUserParticipant.skillRequested.skillName}</p>
                     </div>
                   </div>
 
@@ -298,42 +261,57 @@ const SwapMatches = () => {
                   </div>
 
                   {/* Sessions */}
-                  <div className="mb-6">
-                    <h4 className="text-sm font-medium text-gray-300 mb-3">Recent Sessions</h4>
-                    <div className="space-y-2">
-                      {match.sessions.slice(-3).map((session, index) => (
-                        <div key={index} className="flex items-center gap-3 text-sm">
-                          <div className={`w-3 h-3 rounded-full ${
-                            session.completed ? 'bg-green-500' : 'bg-gray-500'
-                          }`}></div>
-                          <span className="text-gray-400">{formatDate(session.date)}</span>
-                          <span className="text-gray-300">{session.topic}</span>
-                        </div>
-                      ))}
+                  {match.sessions && match.sessions.length > 0 && (
+                    <div className="mb-6">
+                      <h4 className="text-sm font-medium text-gray-300 mb-3">Recent Sessions</h4>
+                      <div className="space-y-2">
+                        {match.sessions.slice(-3).map((session) => (
+                          <div key={session._id} className="flex items-center gap-3 text-sm">
+                            <div className={`w-3 h-3 rounded-full ${
+                              session.completed ? 'bg-green-500' : 'bg-gray-500'
+                            }`}></div>
+                            <span className="text-gray-400">{formatDate(session.date)}</span>
+                            <span className="text-gray-300">{session.topic}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Details */}
                   <div className="text-sm text-gray-400 mb-6">
                     <p><span className="font-medium">Duration:</span> {match.duration}</p>
                     <p><span className="font-medium">Schedule:</span> {match.schedule}</p>
                     <p><span className="font-medium">Last Activity:</span> {formatDate(match.lastActivity)}</p>
-                    {match.rating && (
-                      <p><span className="font-medium">Rating:</span> ⭐ {match.rating}/5</p>
+                    {averageRating && (
+                      <p><span className="font-medium">Average Rating:</span> ⭐ {averageRating}/5</p>
                     )}
                   </div>
 
                   {/* Actions */}
                   <div className="flex gap-3">
                     {match.status === 'active' && (
-                      <button
-                        onClick={() => handleMarkComplete(match._id)}
-                        className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95"
-                      >
-                        Mark Complete
-                      </button>
+                      <>
+                        <button
+                          onClick={() => handleMarkComplete(match._id)}
+                          disabled={actionLoading[match._id]}
+                          className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95"
+                        >
+                          {actionLoading[match._id] ? 'Completing...' : 'Mark Complete'}
+                        </button>
+                        <button
+                          onClick={() => handleCancelMatch(match._id)}
+                          disabled={actionLoading[match._id]}
+                          className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95"
+                        >
+                          {actionLoading[match._id] ? 'Cancelling...' : 'Cancel'}
+                        </button>
+                      </>
                     )}
-                    <button className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95">
+                    <button 
+                      onClick={() => window.location.href = `/matches/${match._id}`}
+                      className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold px-4 py-2 rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95"
+                    >
                       View Details
                     </button>
                   </div>
