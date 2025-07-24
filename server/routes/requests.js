@@ -10,8 +10,8 @@ const router = express.Router();
 router.post('/', [
   auth,
   body('recipientId').isMongoId().withMessage('Valid recipient ID is required'),
-  body('skillOfferedId').isMongoId().withMessage('Valid skill offered ID is required'),
-  body('skillRequestedId').isMongoId().withMessage('Valid skill requested ID is required'),
+  body('skillToOffer').trim().isLength({ min: 1, max: 100 }).withMessage('Skill to offer is required'),
+  body('skillToRequest').trim().isLength({ min: 1, max: 100 }).withMessage('Skill to request is required'),
   body('message').trim().isLength({ min: 10, max: 500 }).withMessage('Message must be between 10 and 500 characters'),
   body('proposedDuration').trim().isLength({ min: 1, max: 100 }).withMessage('Proposed duration is required'),
   body('proposedSchedule').trim().isLength({ min: 1, max: 200 }).withMessage('Proposed schedule is required')
@@ -22,7 +22,7 @@ router.post('/', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { recipientId, skillOfferedId, skillRequestedId, message, proposedDuration, proposedSchedule } = req.body;
+    const { recipientId, skillToOffer, skillToRequest, message, proposedDuration, proposedSchedule } = req.body;
 
     // Check if recipient exists and is not banned
     const recipient = await User.findById(recipientId);
@@ -35,43 +35,20 @@ router.post('/', [
       return res.status(400).json({ message: 'Cannot send request to yourself' });
     }
 
-    // Get requester's skills
+    // Get requester
     const requester = await User.findById(req.user._id);
-    const offeredSkill = requester.skillsOffered.id(skillOfferedId);
-    if (!offeredSkill || !offeredSkill.approved) {
-      return res.status(400).json({ message: 'Offered skill not found or not approved' });
-    }
 
-    // Get recipient's skills
-    const requestedSkill = recipient.skillsOffered.id(skillRequestedId);
-    if (!requestedSkill || !requestedSkill.approved) {
-      return res.status(400).json({ message: 'Requested skill not found or not approved' });
-    }
-
-    // Check if there's already a pending request between these users for these skills
-    const existingRequest = await Request.findOne({
-      requester: req.user._id,
-      recipient: recipientId,
-      'skillOffered.skillId': skillOfferedId,
-      'skillRequested.skillId': skillRequestedId,
-      status: 'pending'
-    });
-
-    if (existingRequest) {
-      return res.status(400).json({ message: 'Request already exists for these skills' });
-    }
-
-    // Create new request
+    // Create new request with skill names
     const newRequest = new Request({
       requester: req.user._id,
       recipient: recipientId,
       skillOffered: {
-        skillId: skillOfferedId,
-        skillName: offeredSkill.name
+        skillId: null, // We'll use skill names instead
+        skillName: skillToOffer
       },
       skillRequested: {
-        skillId: skillRequestedId,
-        skillName: requestedSkill.name
+        skillId: null, // We'll use skill names instead
+        skillName: skillToRequest
       },
       message,
       proposedDuration,
@@ -300,7 +277,6 @@ router.delete('/:id', auth, async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
-
 
 // Mark request as completed
 router.put('/:id/complete', auth, async (req, res) => {

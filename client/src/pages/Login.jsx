@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
-import axios from 'axios'
-import { useAuth } from '../context/AuthContext'
+import { useState } from 'react';
+import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 const Login = ({ onPageChange }) => { // ✅ Accept onPageChange as prop
   const { login } = useAuth()
@@ -29,7 +29,7 @@ const Login = ({ onPageChange }) => { // ✅ Accept onPageChange as prop
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed.')
     }
-  }
+  };
   
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-800 via-blue-gray-900 to-gray-900 px-6">
@@ -112,6 +112,6 @@ const Login = ({ onPageChange }) => { // ✅ Accept onPageChange as prop
       `}</style>
     </div>
   )
-}
+};
 
-export default Login
+export default Login;

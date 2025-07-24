@@ -1,10 +1,11 @@
 // src/App.jsx
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { AuthProvider } from './context/AuthContext'
 import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import Profile from './pages/Profile'
 import Login from './pages/Login' // Add this import
+import Register from './pages/Register';
 import IncomingRequests from './components/IncomingRequests'
 import SwapMatches from './components/SwapMatches'
 
@@ -19,6 +20,8 @@ function App() {
         return <Login onPageChange={setCurrentPage} /> // Pass onPageChange prop
       case 'requests':
         return <IncomingRequests />
+      case 'register':
+        return <Register onPageChange={setCurrentPage} />
       case 'matches':
         return <SwapMatches />
       case 'profile':
@@ -38,6 +41,6 @@ function App() {
       </div>
     </AuthProvider>
   )
-}
+};
 
-export default App
+export default App;

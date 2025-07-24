@@ -3,14 +3,14 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: 'http://localhost:5173/api',
+  baseURL: 'http://localhost:8001/api', // This is the base URL for your backend API
   timeout: 10000,
 });
 
-// Add auth token to requests
+// Add auth token to requests from localStorage
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('token'); // Ensure this matches how you store the token
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -21,13 +21,13 @@ api.interceptors.request.use(
   }
 );
 
-// Handle response errors
+// Handle response errors, such as 401 for an invalid token
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem('authToken');
+      // If token is expired or invalid, clear it and redirect to login
+      localStorage.removeItem('token');
       window.location.href = '/login';
     }
     return Promise.reject(error);
@@ -35,109 +35,121 @@ api.interceptors.response.use(
 );
 
 const swapService = {
-  // Get all matches for the authenticated user
+  /**
+   * Sends a new skill swap request to the backend.
+   * @param {object} requestData - The data for the swap request.
+   * @param {string} requestData.receiverId - The ID of the user receiving the request.
+   * @param {string} requestData.skillToOffer - The skill being offered.
+   * @param {string} requestData.skillToRequest - The skill being requested.
+   * @param {string} requestData.message - Additional message.
+   * @param {string} requestData.proposedDuration - Proposed duration.
+   * @param {string} requestData.proposedSchedule - Proposed schedule.
+   */
+  sendSwapRequest: async (requestData) => {
+    try {
+      // Transform the data to match backend expectations
+      const transformedData = {
+        recipientId: requestData.receiverId,
+        skillToOffer: requestData.skillToOffer,
+        skillToRequest: requestData.skillToRequest,
+        message: requestData.message,
+        proposedDuration: requestData.proposedDuration,
+        proposedSchedule: requestData.proposedSchedule
+      };
+
+      console.log('Sending request data:', transformedData); // Debug log
+      
+      const response = await api.post('/requests', transformedData);
+      return response.data;
+    } catch (error) {
+      console.error('Error sending swap request:', error.response?.data || error.message);
+      
+      // Log detailed error information for debugging
+      if (error.response?.data?.errors) {
+        console.log('Validation errors:', error.response.data.errors);
+        error.response.data.errors.forEach((err, index) => {
+          console.log(`Error ${index + 1}:`, err);
+        });
+      }
+      
+      throw error;
+    }
+  },
+
+  /**
+   * Fetches received swap requests for the authenticated user.
+   * Aligned with the GET /api/requests/received route.
+   */
+  getReceivedRequests: async () => {
+    try {
+      const response = await api.get('/requests/received');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching received requests:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Accepts a swap request.
+   * Aligned with the PUT /api/requests/:id/accept route.
+   * @param {string} requestId - The ID of the request to accept.
+   */
+  acceptRequest: async (requestId) => {
+    try {
+      const response = await api.put(`/requests/${requestId}/accept`);
+      return response.data;
+    } catch (error) {
+      console.error('Error accepting request:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Rejects a swap request.
+   * Aligned with the PUT /api/requests/:id/reject route.
+   * @param {string} requestId - The ID of the request to reject.
+   */
+  rejectRequest: async (requestId) => {
+    try {
+      const response = await api.put(`/requests/${requestId}/reject`);
+      return response.data;
+    } catch (error) {
+      console.error('Error rejecting request:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // --- Existing Match Functions ---
   getMatches: async (status = 'all') => {
     try {
-      const response = await api.get('/matches', {
-        params: { status }
-      });
+      const response = await api.get('/matches', { params: { status } });
       return response.data;
     } catch (error) {
-      console.error('Error fetching matches:', error);
+      console.error('Error fetching matches:', error.response?.data || error.message);
       throw error;
     }
   },
 
-  // Get count of active matches
-  getActiveMatchesCount: async () => {
-    try {
-      const response = await api.get('/matches/active/count');
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching active matches count:', error);
-      throw error;
-    }
-  },
-
-  // Get specific match by ID
-  getMatch: async (matchId) => {
-    try {
-      const response = await api.get(`/matches/${matchId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching match:', error);
-      throw error;
-    }
-  },
-
-  // Mark match as completed
   markMatchComplete: async (matchId) => {
     try {
       const response = await api.put(`/matches/${matchId}/complete`);
       return response.data;
     } catch (error) {
-      console.error('Error marking match as complete:', error);
+      console.error('Error marking match as complete:', error.response?.data || error.message);
       throw error;
     }
   },
 
-  // Cancel a match
   cancelMatch: async (matchId) => {
     try {
       const response = await api.put(`/matches/${matchId}/cancel`);
       return response.data;
     } catch (error) {
-      console.error('Error cancelling match:', error);
+      console.error('Error cancelling match:', error.response?.data || error.message);
       throw error;
     }
   },
-
-  // Add a new session to a match
-  addSession: async (matchId, sessionData) => {
-    try {
-      const response = await api.post(`/matches/${matchId}/sessions`, sessionData);
-      return response.data;
-    } catch (error) {
-      console.error('Error adding session:', error);
-      throw error;
-    }
-  },
-
-  // Mark session as completed
-  completeSession: async (matchId, sessionId) => {
-    try {
-      const response = await api.put(`/matches/${matchId}/sessions/${sessionId}/complete`);
-      return response.data;
-    } catch (error) {
-      console.error('Error completing session:', error);
-      throw error;
-    }
-  },
-
-  // Add rating and feedback for a match
-  rateMatch: async (matchId, rating, feedback) => {
-    try {
-      const response = await api.put(`/matches/${matchId}/rating`, {
-        rating,
-        feedback
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error rating match:', error);
-      throw error;
-    }
-  },
-
-  // Get other participant details
-  getOtherParticipant: async (matchId) => {
-    try {
-      const response = await api.get(`/matches/${matchId}/other-participant`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching other participant:', error);
-      throw error;
-    }
-  }
 };
 
 export default swapService;

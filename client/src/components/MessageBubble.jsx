@@ -1,5 +1,3 @@
-import React from 'react'
-
 const MessageBubble = ({ message, isSender }) => {
   return (
     <div className={`flex ${isSender ? 'justify-end' : 'justify-start'} px-2`}>

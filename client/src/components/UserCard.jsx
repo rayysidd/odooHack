@@ -1,5 +1,3 @@
-import React from 'react'
-
 const UserCard = ({ user, onRequestSwap, className = '' }) => {
   return (
     <div

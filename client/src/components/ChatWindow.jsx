@@ -1,5 +1,5 @@
 // src/components/ChatWindow.jsx
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import MessageBubble from './MessageBubble'
 
 const ChatWindow = ({ messages, onSendMessage, currentUser, otherUser }) => {

@@ -1,11 +1,13 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+// src/pages/Register.jsx
+import { useState } from 'react'
+// import { useNavigate } from 'react-router-dom' // Remove this import
 import axios from 'axios'
-import { useAuth } from '../context/AuthContext' // ✅
+import { useAuth } from '../context/AuthContext'
 
-const Register = () => {
-  const navigate = useNavigate()
-  const { login } = useAuth() // ✅
+// Accept onPageChange as a prop
+const Register = ({ onPageChange }) => { //
+  // const navigate = useNavigate() // Remove this line
+  const { login } = useAuth()
 
   const [form, setForm] = useState({
     name: '',
@@ -27,15 +29,13 @@ const Register = () => {
     try {
       const res = await axios.post('http://localhost:8001/api/auth/register', form)
 
-      // ✅ Notify context after successful register
       login(res.data.user)
 
-      // ✅ Optionally store token
       if (res.data.token) {
         localStorage.setItem('token', res.data.token)
       }
 
-      navigate('/')
+      onPageChange('home') // Navigate to 'home' after successful registration using onPageChange
     } catch (err) {
       console.error("Registration error:", err.response || err)
       setError(err.response?.data?.message || 'Registration failed.')
@@ -108,9 +108,13 @@ const Register = () => {
 
         <p className="text-sm text-center mt-8 text-gray-400">
           Already have an account?{' '}
-          <a href="/login" className="text-cyan-400 underline hover:text-cyan-500 transition">
+          {/* Change to a button and use onPageChange */}
+          <button
+            onClick={() => onPageChange('login')} //
+            className="text-cyan-400 underline hover:text-cyan-500 transition"
+          >
             Login
-          </a>
+          </button>
         </p>
       </div>
 
@@ -141,6 +145,6 @@ const Input = ({ label, ...props }) => (
       required
     />
   </div>
-)
+);
 
-export default Register
+export default Register;

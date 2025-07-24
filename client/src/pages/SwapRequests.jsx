@@ -1,12 +1,12 @@
 // src/components/SwapRequestModal.jsx
-import React, { useState } from 'react'
-import { useAuth } from '../context/AuthContext'
+import { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 const SwapRequestModal = ({ isOpen, onClose, targetUser, onSubmit }) => {
-  const { user } = useAuth()
-  const [skillToOffer, setSkillToOffer] = useState('')
-  const [skillToRequest, setSkillToRequest] = useState('')
-  const [message, setMessage] = useState('')
+  const { user } = useAuth();
+  const [skillToOffer, setSkillToOffer] = useState('');
+  const [skillToRequest, setSkillToRequest] = useState('');
+  const [message, setMessage] = useState('');
 
   const handleSubmit = () => {
     if (!skillToOffer || !skillToRequest || !message.trim()) return
@@ -17,26 +17,26 @@ const SwapRequestModal = ({ isOpen, onClose, targetUser, onSubmit }) => {
       message: message.trim(),
     })
     resetForm()
-  }
+  };
 
   const resetForm = () => {
     setSkillToOffer('')
     setSkillToRequest('')
     setMessage('')
-  }
+  };
 
   const handleClose = () => {
     resetForm()
     onClose()
-  }
+  };
 
   // Mock current user skills for testing
   const currentUserSkills = user?.skills || [
     'React', 'Node.js', 'Python', 'JavaScript', 'HTML/CSS', 
     'UI/UX Design', 'Photography', 'Digital Marketing'
-  ]
+  ];
 
-  if (!isOpen || !targetUser) return null
+  if (!isOpen || !targetUser) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -149,4 +149,4 @@ const SwapRequestModal = ({ isOpen, onClose, targetUser, onSubmit }) => {
   )
 }
 
-export default SwapRequestModal
+export default SwapRequestModal;

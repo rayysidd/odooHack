@@ -1,5 +1,5 @@
 // src/pages/Chat.jsx
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import chatService from '../services/chatService'
 import { useAuth } from '../context/AuthContext'
 import { useSocket } from '../context/SocketContext'

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 
 const FeedbackForm = ({ isOpen, onClose, onSubmit, targetUser }) => {
   const [rating, setRating] = useState(0)
