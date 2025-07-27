@@ -28,9 +28,9 @@ const UserDetails = () => {
     fetchUser()
   }, [id])
 
-  const handleSwapSubmit = async ({ receiverId, message }) => {
+  const handleSwapSubmit = async ({ recipientId, message }) => {
     try {
-      await swapService.sendRequest({ receiverId, message })
+      await swapService.sendRequest({ recipientId, message })
       alert('Swap request sent!')
       setModalOpen(false)
     } catch (err) {

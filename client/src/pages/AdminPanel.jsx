@@ -1,155 +1,77 @@
-import { useEffect, useState } from 'react'
-import userService from '../services/userService'
-import swapService from '../services/swapService'
-import { useAuth } from '../context/AuthContext'
-import { useNavigate } from 'react-router-dom'
+// src/pages/AdminPanel.jsx
+import { useEffect, useState } from 'react';
+import adminService from '../services/adminService';
+import { FaUsers, FaSyncAlt, FaExclamationCircle, FaStar } from 'react-icons/fa';
 
-const AdminPanel = () => {
-  const { user } = useAuth()
-  const navigate = useNavigate()
-  const [users, setUsers] = useState([])
-  const [swaps, setSwaps] = useState([])
+// This is a simple card component for displaying stats.
+const StatCard = ({ icon, title, value, color }) => (
+  <div className={`bg-gray-800 p-6 rounded-lg shadow-lg border-l-4 ${color}`}>
+    <div className="flex items-center">
+      <div className="mr-4 text-3xl">{icon}</div>
+      <div>
+        <p className="text-gray-400 text-sm font-medium">{title}</p>
+        <p className="text-2xl font-bold text-white">{value}</p>
+      </div>
+    </div>
+  </div>
+);
+
+const AdminPanel = ({ onPageChange }) => { // <-- Accept onPageChange prop
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user?.role !== 'admin') navigate('/')
-  }, [user, navigate])
-
-  useEffect(() => {
-    const fetchData = async () => {
+    const fetchStats = async () => {
       try {
-        const res1 = await userService.getAllUsers()
-        const res2 = await swapService.getAllSwaps()
-        setUsers(res1.data)
-        setSwaps(res2.data)
+        const res = await adminService.getStats();
+        setStats(res.data);
       } catch (err) {
-        console.error('Admin data fetch error:', err)
+        console.error("Failed to fetch admin stats:", err);
+      } finally {
+        setLoading(false);
       }
-    }
-    fetchData()
-  }, [])
+    };
+    fetchStats();
+  }, []);
 
-  const handleBanUser = async (userId) => {
-    try {
-      await userService.banUser(userId)
-      alert('User banned successfully!')
-      setUsers(users.map(u => (u._id === userId ? { ...u, banned: true } : u)))
-    } catch (err) {
-      alert('Error banning user.')
-    }
-  }
-
-  const handleDeleteSwap = async (swapId) => {
-    try {
-      await swapService.deleteSwap(swapId)
-      setSwaps(swaps.filter(s => s._id !== swapId))
-    } catch (err) {
-      alert('Failed to delete swap request.')
-    }
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-400"></div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-800 via-blue-gray-900 to-gray-900 text-gray-100 px-6 py-12">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-cyan-300 mb-10 animate-subtleTilt">
-          🛠️ Admin Panel
-        </h1>
+    <div className="text-gray-100 p-4 sm:p-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-4xl font-bold text-cyan-300 mb-8">Admin Dashboard</h1>
 
-        <div className="flex gap-4 mb-10">
-          <button
-            onClick={() => navigate('/admin/announcements')}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded font-medium shadow-md"
-          >
-            📢 Manage Announcements
-          </button>
-          <button
-            onClick={() => navigate('/admin/export')}
-            className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded font-medium shadow-md"
-          >
-            📊 Export Data
-          </button>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <StatCard icon={<FaUsers />} title="Total Users" value={stats?.users?.total ?? 'N/A'} color="border-blue-500" />
+          <StatCard icon={<FaSyncAlt />} title="Total Swaps" value={stats?.requests?.total ?? 'N/A'} color="border-green-500" />
+          <StatCard icon={<FaExclamationCircle />} title="Pending Skills" value={stats?.pendingSkills ?? 'N/A'} color="border-yellow-500" />
+          <StatCard icon={<FaStar />} title="Average Rating" value={stats?.ratings?.average.toFixed(2) ?? 'N/A'} color="border-purple-500" />
         </div>
 
-        {/* User Management */}
-        <section className="mb-12 bg-gray-900 bg-opacity-50 p-6 rounded-xl shadow-inner">
-          <h2 className="text-2xl font-semibold text-blue-200 mb-4">👥 All Users</h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm bg-gray-800 rounded-md">
-              <thead className="bg-blue-700 text-white">
-                <tr>
-                  <th className="px-4 py-2 text-left">Name</th>
-                  <th className="px-4 py-2 text-left">Email</th>
-                  <th className="px-4 py-2 text-left">Role</th>
-                  <th className="px-4 py-2 text-left">Status</th>
-                  <th className="px-4 py-2 text-left">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((u) => (
-                  <tr key={u._id} className="border-b border-gray-600">
-                    <td className="px-4 py-2">{u.name}</td>
-                    <td className="px-4 py-2">{u.email}</td>
-                    <td className="px-4 py-2 capitalize">{u.role}</td>
-                    <td className="px-4 py-2">{u.banned ? '🚫 Banned' : '✅ Active'}</td>
-                    <td className="px-4 py-2">
-                      {!u.banned && (
-                        <button
-                          onClick={() => handleBanUser(u._id)}
-                          className="bg-red-500 text-white px-3 py-1 text-xs rounded hover:bg-red-600"
-                        >
-                          Ban
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        {/* Swap Requests */}
-        <section className="bg-gray-900 bg-opacity-50 p-6 rounded-xl shadow-inner">
-          <h2 className="text-2xl font-semibold text-green-200 mb-4">🔄 Pending Swap Requests</h2>
-          {swaps.length === 0 ? (
-            <p className="text-gray-400">No pending swaps found.</p>
-          ) : (
-            <div className="space-y-3">
-              {swaps.map((s) => (
-                <div
-                  key={s._id}
-                  className="bg-gray-800 p-4 rounded-lg flex justify-between items-start border border-gray-600"
-                >
-                  <div className="text-sm text-gray-200">
-                    <p><strong>From:</strong> {s.sender?.name} → <strong>To:</strong> {s.receiver?.name}</p>
-                    <p className="mt-1 italic text-blue-300">{s.message}</p>
-                  </div>
-                  <button
-                    onClick={() => handleDeleteSwap(s._id)}
-                    className="bg-red-500 text-white text-xs px-3 py-1 rounded hover:bg-red-600 mt-1"
-                  >
-                    Delete
-                  </button>
-                </div>
-              ))}
+        {/* These buttons can navigate if you add cases for them in App.jsx */}
+        <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
+           <h2 className="text-2xl font-semibold text-cyan-400 mb-6">Admin Actions</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <button onClick={() => onPageChange('manage-users')} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg">
+                Manage Users
+              </button>
+              <button onClick={() => onPageChange('announcements')} className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg">
+                Announcements
+              </button>
+              <button onClick={() => alert('Export data page coming soon!')} className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg">
+                Export Data
+              </button>
             </div>
-          )}
-        </section>
+        </div>
       </div>
-
-      <style>{`
-        @keyframes subtleTilt {
-          0%, 100% { transform: rotateX(0deg) rotateY(0deg); }
-          50% { transform: rotateX(2deg) rotateY(2deg); }
-        }
-        .animate-subtleTilt {
-          animation: subtleTilt 12s ease-in-out infinite;
-          display: inline-block;
-          transform-style: preserve-3d;
-          perspective: 800px;
-        }
-      `}</style>
     </div>
-  )
-}
+  );
+};
 
-export default AdminPanel
+export default AdminPanel;

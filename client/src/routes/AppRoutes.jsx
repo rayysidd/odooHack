@@ -16,9 +16,9 @@ import AdminExport from '../pages/AdminExport'
 const AppRoutes = () => {
   const { user } = useAuth()
 
-  // Admin-only route
+  // Admin-only route - FIXED: Check isAdmin instead of role
   const AdminRoute = ({ children }) => {
-    return user?.role === 'admin' ? children : <Navigate to="/" />
+    return user?.isAdmin ? children : <Navigate to="/" />
   }
 
   // Authenticated-only route

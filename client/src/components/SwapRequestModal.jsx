@@ -36,7 +36,7 @@ const SwapRequestModal = ({ isOpen, onClose, targetUser, onSubmit }) => {
     try {
       // Make sure we're sending the correct field names that match the backend
       const requestData = {
-        receiverId: targetUser._id,
+        recipientId: targetUser._id,
         skillToOffer: formData.skillToOffer,
         skillToRequest: formData.skillToRequest,
         message: formData.message,
@@ -329,4 +329,4 @@ const SwapRequestModal = ({ isOpen, onClose, targetUser, onSubmit }) => {
   )
 }
 
-export default SwapRequestModal
+export default SwapRequestModal;

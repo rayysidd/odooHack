@@ -20,20 +20,20 @@ router.get('/', auth, async (req, res) => {
       filter.sender = req.user.id;
     } else if (type === 'announcements') {
       filter = {
-        receiver: req.user.id,
+        recipient: req.user.id,
         isAdminMessage: true
       };
     } else {
       // Default to inbox
       filter = {
-        receiver: req.user.id,
+        recipient: req.user.id,
         isAdminMessage: { $ne: true }
       };
     }
 
     const messages = await Message.find(filter)
       .populate('sender', 'name email profilePhoto')
-      .populate('receiver', 'name email profilePhoto')
+      .populate('recipient', 'name email profilePhoto')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -43,7 +43,7 @@ router.get('/', auth, async (req, res) => {
     // Mark messages as read if viewing inbox
     if (type !== 'sent') {
       await Message.updateMany(
-        { receiver: req.user.id, read: false },
+        { recipient: req.user.id, read: false },
         { read: true }
       );
     }
@@ -66,16 +66,16 @@ router.get('/', auth, async (req, res) => {
 // Send message
 router.post('/', auth, validateMessage, async (req, res) => {
   try {
-    const { receiver, title, content, type } = req.body;
+    const { recipient, title, content, type } = req.body;
 
-    // Check if receiver exists
-    const receiverUser = await User.findById(receiver);
-    if (!receiverUser) {
-      return res.status(404).json({ message: 'Receiver not found' });
+    // Check if recipient exists
+    const recipientUser = await User.findById(recipient);
+    if (!recipientUser) {
+      return res.status(404).json({ message: 'recipient not found' });
     }
 
-    // Check if receiver is banned
-    if (receiverUser.banned) {
+    // Check if recipient is banned
+    if (recipientUser.banned) {
       return res.status(400).json({ message: 'Cannot send message to banned user' });
     }
 
@@ -87,7 +87,7 @@ router.post('/', auth, validateMessage, async (req, res) => {
 
     const message = new Message({
       sender: req.user.id,
-      receiver,
+      recipient,
       title,
       content,
       type: type || 'message',
@@ -97,7 +97,7 @@ router.post('/', auth, validateMessage, async (req, res) => {
     await message.save();
 
     await message.populate('sender', 'name email profilePhoto');
-    await message.populate('receiver', 'name email profilePhoto');
+    await message.populate('recipient', 'name email profilePhoto');
 
     res.status(201).json({
       message: 'Message sent successfully',
@@ -113,9 +113,9 @@ router.patch('/read/all', auth, async (req, res) => {
   try {
     await Message.updateMany(
       { 
-        receiver: req.user.id, 
+        recipient: req.user.id, 
         read: false,
-        deletedByReceiver: { $ne: true }
+        deletedByrecipient: { $ne: true }
       },
       { 
         read: true, 
@@ -133,9 +133,9 @@ router.patch('/read/all', auth, async (req, res) => {
 router.get('/unread/count', auth, async (req, res) => {
   try {
     const count = await Message.countDocuments({
-      receiver: req.user.id,
+      recipient: req.user.id,
       read: false,
-      deletedByReceiver: { $ne: true }
+      deletedByrecipient: { $ne: true }
     });
 
     res.json({ count });
@@ -153,9 +153,9 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(404).json({ message: 'Message not found' });
     }
 
-    // Check if user is sender or receiver
+    // Check if user is sender or recipient
     if (message.sender.toString() !== req.user.id && 
-        message.receiver.toString() !== req.user.id) {
+        message.recipient.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
@@ -163,12 +163,12 @@ router.delete('/:id', auth, async (req, res) => {
     if (message.sender.toString() === req.user.id) {
       message.deletedBySender = true;
     }
-    if (message.receiver.toString() === req.user.id) {
-      message.deletedByReceiver = true;
+    if (message.recipient.toString() === req.user.id) {
+      message.deletedByrecipient = true;
     }
 
     // If both users have deleted, remove from database
-    if (message.deletedBySender && message.deletedByReceiver) {
+    if (message.deletedBySender && message.deletedByrecipient) {
       await Message.findByIdAndDelete(req.params.id);
     } else {
       await message.save();
@@ -185,20 +185,20 @@ router.get('/:id', auth, async (req, res) => {
   try {
     const message = await Message.findById(req.params.id)
       .populate('sender', 'name email profilePhoto')
-      .populate('receiver', 'name email profilePhoto');
+      .populate('recipient', 'name email profilePhoto');
 
     if (!message) {
       return res.status(404).json({ message: 'Message not found' });
     }
 
-    // Check if user is sender or receiver
+    // Check if user is sender or recipient
     if (message.sender._id.toString() !== req.user.id && 
-        message.receiver._id.toString() !== req.user.id) {
+        message.recipient._id.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    // Mark as read if user is receiver
-    if (message.receiver._id.toString() === req.user.id && !message.read) {
+    // Mark as read if user is recipient
+    if (message.recipient._id.toString() === req.user.id && !message.read) {
       message.read = true;
       message.readAt = new Date();
       await message.save();

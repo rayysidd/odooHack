@@ -7,29 +7,34 @@ const Message = require('../models/Message');
 const auth = require('../middleware/auth');
 const adminAuth = require('../middleware/adminAuth');
 
-// Get all users with pagination
 router.get('/users', auth, adminAuth, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
+    // Get users with pagination
     const users = await User.find({})
       .select('-password')
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });
+    
+    // Get total count for pagination
+    const totalUsers = await User.countDocuments();
+    const totalPages = Math.ceil(totalUsers / limit);
 
-    const total = await User.countDocuments();
-
+    // Return data in the expected format
     res.json({
-      users,
-      totalPages: Math.ceil(total / limit),
+      users: users,
+      totalPages: totalPages,
       currentPage: page,
-      total
+      total: totalUsers
     });
+
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Admin users route error:', error.message);
+    res.status(500).json({ message: 'Server Error' });
   }
 });
 
@@ -53,35 +58,43 @@ router.patch('/users/:id/ban', auth, adminAuth, async (req, res) => {
   }
 });
 
-// Make user admin
-router.patch('/skills/:userId/approve', auth, adminAuth, async (req, res) => {
+// Set a user's admin status
+router.patch('/users/:id/set-admin', auth, adminAuth, async (req, res) => {
   try {
-    const { skillId, skillType, approved, rejectionReason } = req.body;
-
-    const user = await User.findById(req.params.userId);
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    const skillArray = skillType === 'offered' ? user.skillsOffered : user.skillsWanted;
-    const skill = skillArray.id(skillId);
-
-    if (!skill) return res.status(404).json({ message: 'Skill not found' });
-
-    // Logic: if rejectionReason exists, force reject
-    if (rejectionReason && rejectionReason.trim() !== '') {
-      skill.approved = false;
-      skill.rejectionReason = rejectionReason;
-      resMessage = 'rejected';
-    } else {
-      skill.approved = true;
-      skill.rejectionReason = null;
-      resMessage = 'approved';
+    const { isAdmin } = req.body;
+    
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
 
+    user.isAdmin = isAdmin;
     await user.save();
 
-    res.json({ message: `Skill ${resMessage} successfully` });
+    res.json({ message: 'User admin status updated successfully' });
   } catch (error) {
-    console.error('Skill approval error:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+// --- AND ADD THIS ROUTE ---
+// Delete a user
+router.delete('/users/:id', auth, adminAuth, async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Here you could also delete related data if needed
+    // await Request.deleteMany({ $or: [{ requester: user._id }, { recipient: user._id }] });
+    // await Message.deleteMany({ $or: [{ sender: user._id }, { recipient: user._id }] });
+    // await Rating.deleteMany({ $or: [{ rater: user._id }, { ratee: user._id }] });
+
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
@@ -167,7 +180,7 @@ router.get('/requests', auth, adminAuth, async (req, res) => {
 
     const requests = await Request.find(filter)
       .populate('requester', 'name email')
-      .populate('receiver', 'name email')
+      .populate('recipient', 'name email')
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });
@@ -194,7 +207,7 @@ router.post('/broadcast', auth, adminAuth, async (req, res) => {
     
     const messages = users.map(user => ({
       sender: req.user.id,
-      receiver: user._id,
+      recipient: user._id,
       title,
       content,
       type: type || 'announcement',
@@ -347,14 +360,14 @@ router.get('/reports/swaps', auth, adminAuth, async (req, res) => {
 
     const requests = await Request.find(filter)
       .populate('requester', 'name email')
-      .populate('receiver', 'name email')
+      .populate('recipient', 'name email')
       .sort({ createdAt: -1 });
 
     const report = requests.map(request => ({
       requesterName: request.requester.name,
       requesterEmail: request.requester.email,
-      receiverName: request.receiver.name,
-      receiverEmail: request.receiver.email,
+      recipientName: request.recipient.name,
+      recipientEmail: request.recipient.email,
       skillOffered: request.skillOffered,
       skillWanted: request.skillWanted,
       status: request.status,

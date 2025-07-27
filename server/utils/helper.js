@@ -170,9 +170,9 @@ const generateNotificationMessage = (type, data) => {
     case 'request_received':
       return `You have a new skill swap request from ${data.requesterName}`;
     case 'request_accepted':
-      return `Your skill swap request has been accepted by ${data.receiverName}`;
+      return `Your skill swap request has been accepted by ${data.recipientName}`;
     case 'request_rejected':
-      return `Your skill swap request has been declined by ${data.receiverName}`;
+      return `Your skill swap request has been declined by ${data.recipientName}`;
     case 'skill_approved':
       return `Your skill "${data.skillName}" has been approved`;
     case 'skill_rejected':

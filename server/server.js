@@ -10,7 +10,14 @@ const app = express();
 
 // Security middleware
 app.use(helmet());
-app.use(cors());
+
+// FIX: Added CORS options to allow requests from your frontend
+const corsOptions = {
+  origin: 'http://localhost:5173', // Specifies the allowed origin
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200 
+};
+app.use(cors(corsOptions));
 
 // Rate limiting
 const limiter = rateLimit({

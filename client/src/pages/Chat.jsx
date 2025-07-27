@@ -56,7 +56,7 @@ const Chat = () => {
     if (!text.trim()) return
     const msg = {
       sender: user._id,
-      receiver: selectedUser._id,
+      recipient: selectedUser._id,
       text,
     }
     try {

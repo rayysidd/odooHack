@@ -40,7 +40,7 @@ router.post('/', [
 
     // Create new request with skill names
     const newRequest = new Request({
-      requester: req.user._id,
+      requester: requester._id,
       recipient: recipientId,
       skillOffered: {
         skillId: null, // We'll use skill names instead

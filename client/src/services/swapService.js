@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: 'http://localhost:8001/api', // This is the base URL for your backend API
+  baseURL: '/api/', // CORRECTED: Use a relative path to work with the Vite proxy
   timeout: 10000,
 });
 
@@ -38,7 +38,7 @@ const swapService = {
   /**
    * Sends a new skill swap request to the backend.
    * @param {object} requestData - The data for the swap request.
-   * @param {string} requestData.receiverId - The ID of the user receiving the request.
+   * @param {string} requestData.recipientId - The ID of the user receiving the request.
    * @param {string} requestData.skillToOffer - The skill being offered.
    * @param {string} requestData.skillToRequest - The skill being requested.
    * @param {string} requestData.message - Additional message.
@@ -49,7 +49,7 @@ const swapService = {
     try {
       // Transform the data to match backend expectations
       const transformedData = {
-        recipientId: requestData.receiverId,
+        recipientId: requestData.recipientId,
         skillToOffer: requestData.skillToOffer,
         skillToRequest: requestData.skillToRequest,
         message: requestData.message,
