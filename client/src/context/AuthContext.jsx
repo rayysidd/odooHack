@@ -6,6 +6,7 @@ export const AuthContext = createContext()
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [token, setToken] = useState(null) // 1. Add state for the token
+  const [loading, setLoading] = useState(true);
 
   // On mount, load user and token from localStorage
   useEffect(() => {
@@ -16,6 +17,7 @@ export const AuthProvider = ({ children }) => {
       setUser(JSON.parse(savedUser))
       setToken(savedToken)
     }
+    setLoading(false)
   }, [])
 
   // 3. Update login to handle both user and token
@@ -36,7 +38,7 @@ export const AuthProvider = ({ children }) => {
 
   // 5. Provide the token in the context value
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={{ user, setUser, token, login, logout }}>
       {children}
     </AuthContext.Provider>
   )
